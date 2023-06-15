@@ -4,10 +4,26 @@
 #include <conio.h>
 #include <ctime>
 #include <windows.h>
+#include <list>
+
+using namespace std;
 
 #pragma comment( lib, "ws2_32.lib")
 
-const char* printChoice[3] = { "가위", "바위", "보" };
+list<const char*> conversationList;
+int i = 0;
+char input[100] = "";
+
+void PrintBoard()
+{
+	system("cls");
+	list<const char*>::iterator iter = conversationList.begin();
+	list<const char*>::iterator iterEnd = conversationList.end();
+	for (; iter != iterEnd; iter++)
+		printf("%s\n", *iter);
+	puts("=========================================================");
+	printf("입력 : %s\n", input);
+}
 
 int main(void)
 {
@@ -39,79 +55,86 @@ int main(void)
 		return -1;
 	}
 
-	LARGE_INTEGER timer, start, end;
-	float deltaTime, timeLeft;
-	QueryPerformanceFrequency(&timer);
+	u_long nonBlockingMode = 1;
+	ioctlsocket(hSocket, FIONBIO, &nonBlockingMode);
 
-	float elapsed;
+	PrintBoard();
+
+	srand(time(nullptr));
+	char random;
 
 	while (1)
 	{
-		int recvSize;
-		char recvData[10];
-		recvSize = recv(hSocket, recvData, sizeof(recvData), 0);
+		int tempSize;
+		char temp[100];
+		tempSize = recv(hSocket, temp, sizeof(temp), 0);
 
-		if (recvSize == -1)
+		if (_kbhit())
 		{
-			printf("recv() Error  \n");
-			return -1;
-		}
-
-		int game = recvData[0] - '0';
-
-		if (game == 0)
-		{
-			int input = 0;
-			elapsed = 0.0f;
-
-			while (1)
+			char ch = _getch();
+			if (ch == '\r')
 			{
-				QueryPerformanceCounter(&start);
-				if (_kbhit())
+				if (strlen(input) > 0)
 				{
-					input = _getch() - '0';
+					send(hSocket, input, strlen(input) + 1, 0);
+					memset(input, 0, sizeof(input));
+					i = 0;
 				}
-
-				system("cls");
-
-
-				QueryPerformanceCounter(&end);
-				deltaTime = (end.QuadPart - start.QuadPart) / (float)timer.QuadPart;
-
-				elapsed += deltaTime;
-				timeLeft = 3.0 - elapsed;
-
-				if (timeLeft < 0.0)
-				{
-					if(input == 0)
-						input = rand() % 3 + 1;
-					break;
-				}
-
-				const char* temp = "없음";
-
-				if (input > 0 && input < 4)
-					temp = printChoice[input - 1];
-
-				printf("%.1f초 남음, 현재 선택한거 : %s", timeLeft, temp);
 			}
-
-			char num[10];
-			sprintf_s(num, sizeof(num), "%d", input);
-			send(hSocket, num, strlen(num) + 1, 0);
-
-			char temp[100];
-			recv(hSocket, temp, sizeof(temp), 0);
-			puts(temp);
-
+			else if (ch == '\b')
+			{
+				if (i >= 1)
+					input[--i] = 0;
+			}
+			else
+				input[i++] = ch;
+			PrintBoard();
 		}
-		else if (game == 1)
-			break;
-	}
 
-	char result[20];
-	recv(hSocket, result, sizeof(result), 0);
-	puts(result);
+		// test
+		/*
+		random = rand() % 26 + 'a';
+		char test[5];
+		sprintf_s(test, sizeof(test), "%c", random);
+		send(hSocket, test, strlen(test) + 1, 0);
+		*/
+
+		if (tempSize != SOCKET_ERROR)
+		{
+			char* inputTemp = new char[strlen(temp) + 1];
+			strcpy_s(inputTemp, strlen(temp) + 1, temp);
+			conversationList.push_back(inputTemp);
+			PrintBoard();
+		}
+
+		if (conversationList.size() > 10)
+		{
+			delete[] conversationList.front();
+			conversationList.pop_front();
+			PrintBoard();
+		}
+
+
+		/*
+		if (tempSize == -1)
+		{
+			int error = WSAGetLastError();
+			if (error == WSAEWOULDBLOCK)
+			{
+				printf("수신안함\n");
+				continue;
+			}
+			else
+			{
+				printf("recv() Error  \n");
+				return -1;
+			}
+		}
+		*/
+
+
+		
+	}
 
 	closesocket(hSocket);
 	WSACleanup();

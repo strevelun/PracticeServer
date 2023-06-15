@@ -4,99 +4,44 @@
 #include <stack>
 #include <queue>
 #include <ctime>
+#include <list>
+#include <conio.h>
 
 using namespace std;
 
 #pragma comment( lib, "ws2_32.lib")
 
-int serverCount = 0;
-int clientCount = 0;
+list<const char*> conversationList;
+char input[100] = "";
+int i = 0;
+char random;
 
-const char* printChoice[3] = { "가위", "바위", "보" };
-
-int Add(char* str)
+void PrintBoard()
 {
-	int len = strlen(str);
-	stack<int> s;
-	queue<int> numbers;
-	queue<char> ops;
-	int a = 0;
-
-	for (int i = 0; i <= len; i++)
-	{
-		if (i >= len || str[i] < '0' || str[i] > '9')
-		{
-			int j = 1, result = 0;
-			int temp;
-			while (!s.empty())
-			{
-				temp = s.top() * j;
-				result += temp;
-				j *= 10;
-				s.pop();
-			}
-
-			numbers.push(result);
-
-			if (i >= len) break;
-
-			switch (str[i])
-			{
-			case '+':
-			case '-':
-				ops.push(str[i]);
-				break;
-			}
-			continue;
-		}
-		s.push(str[i] - '0');
-	}
-
-	a = numbers.front();
-	numbers.pop();
-
-	while (!numbers.empty())
-	{
-		int t = numbers.front();
-		numbers.pop();
-
-		switch (ops.front())
-		{
-		case '+':
-			a += t;
-			break;
-		case '-':
-			a -= t;
-			break;
-		}
-		ops.pop();
-	}
-
-	return a;
+	system("cls");
+	list<const char*>::iterator iter = conversationList.begin();
+	list<const char*>::iterator iterEnd = conversationList.end();
+	for (; iter != iterEnd; iter++)
+		printf("%s\n", *iter);
+	puts("=========================================================");
+	printf("입력 : %s\n", input);
 }
 
-// 1 : 가위
-// 2 : 바위
-// 3 : 보
-void Game(int server, int client)
+void Test(SOCKET& clientSocket)
 {
-	if (server == client)
-		printf("무승부! === ");
-
-	if (server == 1)
+	// test
+	random = rand() % 26;
+	char test[5];
+	sprintf_s(test, sizeof(test), "%d", random);
+	char* inputTemp = new char[strlen(test) + 1];
+	strcpy_s(inputTemp, strlen(test) + 1, test);
+	conversationList.push_back(inputTemp);
+	send(clientSocket, test, strlen(test) + 1, 0);
+	if (conversationList.size() > 10)
 	{
-		if (client == 2) clientCount++;
-		else if (client == 3) serverCount++;
-	}
-	else if (server == 2)
-	{
-		if (client == 1) serverCount++;
-		else if (client == 3) clientCount++;
-	}
-	else if (server == 3)
-	{
-		if (client == 1) clientCount++;
-		else if (client == 2) serverCount++;
+		delete[] conversationList.front();
+		conversationList.pop_front();
+		PrintBoard();
 	}
 }
 
@@ -144,56 +89,98 @@ int main(void)
 		return -1;
 	}
 
-	clock_t start, finish;
-	double elapsed;
-	srand(time(NULL));
-	int isGameEnd = 0; // 0은 안끝남
+	u_long nonBlockingMode = 1;
+	ioctlsocket(clientSocket, FIONBIO, &nonBlockingMode);
+
+	PrintBoard();
+
+	srand(time(nullptr));
+
+	LARGE_INTEGER timer, start, end;
+	float deltaTime, elapsed = 0.0f;
+	QueryPerformanceFrequency(&timer);
 
 	while (1)
 	{
-		elapsed = 0.0;
-		int choice = rand() % 3 + 1;
+		QueryPerformanceCounter(&start);
+		int tempSize;
+		char temp[100];
+		tempSize = recv(clientSocket, temp, sizeof(temp), 0);
 
-		char game[10];
-		sprintf_s(game, sizeof(game), "%d", isGameEnd);
-		send(clientSocket, game, strlen(game) + 1, 0); // 시작했다고 send
-
-		if (isGameEnd == 1) break;
-
-
-		int recvSize;
-		char recvData[10];
-		recvSize = recv(clientSocket, recvData, sizeof(recvData), 0);
-		if (recvSize == -1)
+		if (_kbhit())
 		{
-			printf("recv() Error  \n");
-			return -1;
+			char ch = _getch();
+			if (ch == '\r')
+			{
+				if (strlen(input) > 0)
+				{
+					char* inputTemp = new char[strlen(input) + 1];
+					strcpy_s(inputTemp, strlen(input) + 1, input);
+					conversationList.push_back(inputTemp);
+					send(clientSocket, input, strlen(input) + 1, 0);
+					memset(input, 0, sizeof(input));
+					i = 0;
+					if (conversationList.size() > 10)
+					{
+						delete[] conversationList.front();
+						conversationList.pop_front();
+					}
+				}
+			}
+			else if (ch == '\b')
+			{
+				if (i >= 1)
+					input[--i] = 0;
+			}
+			else
+				input[i++] = ch;
+			PrintBoard();
+		}
+		/*
+		if (elapsed >= 0.1f)
+		{
+			Test(clientSocket);
+			elapsed = 0.0f;
+			PrintBoard();
+		}*/
+
+		if (tempSize != SOCKET_ERROR)
+		{
+			char* inputTemp = new char[strlen(temp) + 1];
+			strcpy_s(inputTemp, strlen(temp) + 1, temp);
+			conversationList.push_back(inputTemp);
+			send(clientSocket, temp, strlen(temp) + 1, 0);
+			if (conversationList.size() > 10)
+			{
+				delete[] conversationList.front();
+				conversationList.pop_front();
+			}
+			PrintBoard();
 		}
 
 
-		int counter = recvData[0] - '0'; // 클라이언트가 선택한 숫자
-		
+		QueryPerformanceCounter(&end);
+		deltaTime = (end.QuadPart - start.QuadPart) / (float)timer.QuadPart;
+		elapsed += deltaTime;
 
-		Game(choice, counter);
 
-		if (serverCount >= 3 || clientCount >= 3) isGameEnd = 1;
+		/*
+		if (recvSize == -1)
+		{
+			if (WSAGetLastError() == WSAEWOULDBLOCK)
+			{
+				printf("수신안함\n");
+				continue;
+			}
+			else
+			{
+				printf("recv() Error  \n");
+				return -1;
+			}
+		}
+		*/
 
-		char temp[100];
-		sprintf_s(temp, sizeof(temp), "결과! 선택 -> (서버:%s, 클라:%s) | 결과 -> (서버:%d, 클라:%d)", printChoice[choice - 1], printChoice[counter - 1], serverCount, clientCount);
-		puts(temp);
-		send(clientSocket, temp, strlen(temp) + 1, 0);
-
-		Sleep(3000);
 	}
-
-	char result[20];
-	if (serverCount > clientCount)
-		sprintf_s(result, sizeof(result), "%s", "서버 승!");
-	else
-		sprintf_s(result, sizeof(result), "%s", "클라 승!");
-
-	send(clientSocket, result, strlen(result) + 1, 0);
-	puts(result);
 
 	closesocket(clientSocket);
 	closesocket(hSocket);
