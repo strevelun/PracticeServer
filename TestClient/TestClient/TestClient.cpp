@@ -5,30 +5,68 @@
 #include <ctime>
 #include <windows.h>
 #include <list>
+#include <process.h>
+#include <queue>
 
 using namespace std;
+
+// 나중에 들어온 클라는 지금까지 나눴던 데이터 10줄 정보 가져옴.
 
 #pragma comment( lib, "ws2_32.lib")
 
 list<const char*> conversationList;
+bool isEntered = false;
 int i = 0;
 char input[100] = "";
+SOCKET   hSocket;
+bool isUsed = false;
+bool isEnd = false;
+//queue<float> queueMsgElapsed;
 
 void PrintBoard()
 {
-	system("cls");
-	list<const char*>::iterator iter = conversationList.begin();
-	list<const char*>::iterator iterEnd = conversationList.end();
-	for (; iter != iterEnd; iter++)
-		printf("%s\n", *iter);
-	puts("=========================================================");
-	printf("입력 : %s\n", input);
+	if (!isUsed)
+	{ 
+		isUsed = true;
+		system("cls");
+		for (int i = 0; i < 10 - conversationList.size(); i++) puts("");
+		list<const char*>::iterator iter = conversationList.begin();
+		list<const char*>::iterator iterEnd = conversationList.end();
+		for (; iter != iterEnd; iter++)
+			printf("%s\n", *iter);
+		puts("=========================================================");
+		printf("입력 : %s\n", input);
+		isUsed = false;
+	}
+}
+
+unsigned int __stdcall Comm(void* _pArgs)
+{
+	while (1)
+	{
+		int tempSize;
+		char temp[100];
+		tempSize = recv(hSocket, temp, sizeof(temp), 0);
+
+		if (tempSize != SOCKET_ERROR)
+		{
+			char* inputTemp = new char[strlen(temp) + 1];
+			strcpy_s(inputTemp, strlen(temp) + 1, temp);
+			if (strcmp("▒", inputTemp) == 0)
+			{
+				isEnd = true;
+				break;
+			}
+			conversationList.push_back(inputTemp);
+			PrintBoard();
+		}
+	}
+	return -1;
 }
 
 int main(void)
 {
 	WSADATA  wsaData;
-	SOCKET   hSocket;
 	SOCKADDR_IN  servAddr;
 
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
@@ -55,19 +93,20 @@ int main(void)
 		return -1;
 	}
 
-	u_long nonBlockingMode = 1;
-	ioctlsocket(hSocket, FIONBIO, &nonBlockingMode);
+	unsigned int threadID;
+	HANDLE hThread;
+	hThread = (HANDLE)_beginthreadex(NULL, 0, &Comm, nullptr, 0, &threadID);
 
 	PrintBoard();
 
 	srand(time(nullptr));
-	char random;
+
+	LARGE_INTEGER timer, start, end;
+	float deltaTime, elapsed = 0.0f;
+	QueryPerformanceFrequency(&timer);
 
 	while (1)
 	{
-		int tempSize;
-		char temp[100];
-		tempSize = recv(hSocket, temp, sizeof(temp), 0);
 
 		if (_kbhit())
 		{
@@ -78,6 +117,7 @@ int main(void)
 				{
 					send(hSocket, input, strlen(input) + 1, 0);
 					memset(input, 0, sizeof(input));
+					//queueMsgElapsed.push(elapsed);
 					i = 0;
 				}
 			}
@@ -86,26 +126,16 @@ int main(void)
 				if (i >= 1)
 					input[--i] = 0;
 			}
+			else if (ch == 27) // esc키
+			{
+				send(hSocket, "▒", strlen("▒") + 1, 0);
+			}
 			else
 				input[i++] = ch;
 			PrintBoard();
 		}
 
-		// test
-		/*
-		random = rand() % 26 + 'a';
-		char test[5];
-		sprintf_s(test, sizeof(test), "%c", random);
-		send(hSocket, test, strlen(test) + 1, 0);
-		*/
-
-		if (tempSize != SOCKET_ERROR)
-		{
-			char* inputTemp = new char[strlen(temp) + 1];
-			strcpy_s(inputTemp, strlen(temp) + 1, temp);
-			conversationList.push_back(inputTemp);
-			PrintBoard();
-		}
+		if (isEnd) break;
 
 		if (conversationList.size() > 10)
 		{
@@ -113,31 +143,11 @@ int main(void)
 			conversationList.pop_front();
 			PrintBoard();
 		}
-
-
-		/*
-		if (tempSize == -1)
-		{
-			int error = WSAGetLastError();
-			if (error == WSAEWOULDBLOCK)
-			{
-				printf("수신안함\n");
-				continue;
-			}
-			else
-			{
-				printf("recv() Error  \n");
-				return -1;
-			}
-		}
-		*/
-
-
-		
 	}
 
 	closesocket(hSocket);
 	WSACleanup();
+	CloseHandle(hThread);
 
 	system("pause");
 	return 0;
