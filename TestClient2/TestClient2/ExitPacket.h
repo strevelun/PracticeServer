@@ -6,7 +6,5 @@ class ExitPacket :
 public:
     ExitPacket();
     ~ExitPacket();
-
-    char* MakePacket() override;
 };
 

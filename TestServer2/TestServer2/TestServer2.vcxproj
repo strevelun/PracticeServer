@@ -127,6 +127,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="App.cpp" />
     <ClCompile Include="ChatServer.cpp" />
     <ClCompile Include="Listener.cpp" />
     <ClCompile Include="Packet.cpp" />
@@ -134,6 +135,7 @@
     <ClCompile Include="TestServer2.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="App.h" />
     <ClInclude Include="ChatServer.h" />
     <ClInclude Include="Listener.h" />
     <ClInclude Include="Packet.h" />

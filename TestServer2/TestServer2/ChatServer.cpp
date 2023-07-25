@@ -13,7 +13,9 @@ ChatServer::~ChatServer()
 
 bool ChatServer::Init(const char* _serverIP, int _serverPort)
 {
-	if (WSAStartup(MAKEWORD(2, 2), &m_wsaData) != 0)
+	WSADATA  wsaData;
+
+	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
 	{
 		printf("Failed WSAStartup() \n");
 		return false;
@@ -49,7 +51,7 @@ void ChatServer::Run()
 	while (true)
 	{
 		fdReads = fdSocketInfos;
-		iRet = select(0, &fdReads, 0, 0, 0);
+		iRet = select(0, &fdReads, 0, 0, 0);    // accept 와 recv 두개 감시
 		if (iRet == SOCKET_ERROR) break;
 
 		for (i = 0; i < fdSocketInfos.fd_count; i++)

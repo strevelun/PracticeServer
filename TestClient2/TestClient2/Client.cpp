@@ -2,32 +2,31 @@
 #include "Connector.h"
 #include "ChatPacket.h"
 #include "ExitPacket.h"
+#include "UIManager.h"
+#include "ChatManager.h"
 
 #include <stdio.h>
 #include <conio.h>
-#include <Windows.h>
 #include <thread>
+#include <Windows.h>
 
 using namespace std;
 
-Client::Client() 
-	: m_isRunning(true), 
-	m_pPacketHandler(nullptr),
-	m_hThread(INVALID_HANDLE_VALUE)
+Client::Client()
 {
 }
 
 Client::~Client()
 {
 	delete[] m_userName;
-	delete m_pPacketHandler;
-
 	CloseHandle(m_hThread);
 }
 
 bool Client::Init(const char* _serverIP, int _serverPort)
 {
-	if (WSAStartup(MAKEWORD(2, 2), &m_wsaData) != 0)
+	WSADATA  wsaData;
+
+	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
 	{
 		printf("Failed WSAStartup() \n");
 		return false;
@@ -45,10 +44,13 @@ bool Client::Init(const char* _serverIP, int _serverPort)
 		return false;
 	}
 
-	m_pPacketHandler = new PacketHandler(&m_connector, &m_ui, &m_chat);
-
 	unsigned int threadID;
 	m_hThread = (HANDLE)_beginthreadex(NULL, 0, ThreadFunc, this, 0, &threadID);
+	if (m_hThread == NULL)
+	{
+		printf("Failed BeginThreadEx\n");
+		return false;
+	}
 
     return true;
 }
@@ -59,49 +61,21 @@ void Client::Cleanup()
 	WSACleanup();
 }
 
-void Client::Run()
-{	
-	do {
-		system("cls");
-		printf("닉네임 입력 : ");
-		scanf_s("%s", m_userName, UserNameLen);
-	} while (strlen(m_userName) < 1);
-	
-	m_ui.PrintBoard(m_chat);
-
-	while (1)
-	{
-		if (!m_isRunning) break;
-
-		bool isTyped = false;
-		ePacketType type = m_chat.Input(isTyped);
-
-		if (isTyped == true)
-			m_ui.PrintBoard(m_chat);
-
-		if (type == ePacketType::Exit)
-		{
-			ExitPacket* exitPacket = new ExitPacket();
-			m_connector.Send(exitPacket);
-		}
-		else if (type == ePacketType::Chat)
-		{
-			const char* inputBuffer = m_chat.GetInputBuffer();
-			ChatPacket* chatPacket = new ChatPacket(m_userName, strlen(m_userName), inputBuffer, strlen(inputBuffer));
-			m_connector.Send(chatPacket);
-			m_chat.ClearInputBuffer();
-		}
-	}
+void Client::SetNickname(char* _nickname)
+{
+	memcpy(m_userName, _nickname, strlen(_nickname));
 }
 
-unsigned int Client::ReceiveAndProcessPacket()
+unsigned int Client::ReceivePacket()
 {
-	int					recvSize, curTotalRecvSize = 0;
-	u_short				packetSize;
-	char				recvBuffer[255];
+	int							recvSize, curTotalRecvSize = 0;
+	unsigned short				packetSize;
+	char						recvBuffer[255];
 	int bufferSize = sizeof(recvBuffer);
 
-	while (m_isRunning)
+	bool isRunning = true;
+
+	while (isRunning)
 	{
 		recvSize = m_connector.Receive(recvBuffer + curTotalRecvSize, bufferSize - curTotalRecvSize);
 		if (recvSize == -1) break;
@@ -113,10 +87,11 @@ unsigned int Client::ReceiveAndProcessPacket()
 			packetSize = *(u_short*)recvBuffer;
 			if (curTotalRecvSize < 2 || packetSize > curTotalRecvSize) break;
 
-			ePacketType type = m_pPacketHandler->ProcessPacket(recvBuffer, packetSize);
+			ePacketType type = ProcessPacket(recvBuffer);
+
 			if (type == ePacketType::Exit)
 			{
-				m_isRunning = false;
+				isRunning = false;
 				break;
 			}
 
@@ -127,8 +102,50 @@ unsigned int Client::ReceiveAndProcessPacket()
 	return 0;
 }
 
+ePacketType Client::ProcessPacket(char* _packet)
+{
+	char* tempPacket = _packet;
+	tempPacket += sizeof(u_short);
+	u_short type = *(u_short*)tempPacket;
+
+	if ((ePacketType)type == ePacketType::Chat)
+	{
+		return m_packetHandler.HandleChatPacket(tempPacket);
+	}
+	else if ((ePacketType)type == ePacketType::Exit)
+	{
+		return ePacketType::Exit;
+	}
+	return ePacketType::None;
+}
+
 unsigned int __stdcall Client::ThreadFunc(void* _pArgs)
 {
-	Client* client = static_cast<Client*>(_pArgs);
-	return client->ReceiveAndProcessPacket();
+	Client* pClient = static_cast<Client*>(_pArgs);
+	return pClient->ReceivePacket();
+}
+
+void Client::Update()
+{	
+	UI* pUI = UIManager::GetInst()->GetUI();
+	ChatManager* chatManager = ChatManager::GetInst();
+	
+	bool isTyped = false;
+	ePacketType type = chatManager->Input(isTyped);
+
+	if (isTyped == true)
+		pUI->PrintBoard();
+
+	if (type == ePacketType::Exit)
+	{
+		ExitPacket* exitPacket = new ExitPacket();
+		m_connector.Send(exitPacket);
+	}
+	else if (type == ePacketType::Chat)
+	{
+		const char* inputBuffer = chatManager->GetInputBuffer();
+		ChatPacket* chatPacket = new ChatPacket(m_userName, strlen(m_userName), inputBuffer, strlen(inputBuffer));
+		m_connector.Send(chatPacket);
+		chatManager->ClearInputBuffer();
+	}
 }

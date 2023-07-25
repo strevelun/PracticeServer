@@ -8,8 +8,6 @@
 class ChatServer
 {
 private:
-	WSADATA  m_wsaData;
-
 	Listener m_listener;
 	PacketHandler m_packetHandler;
 

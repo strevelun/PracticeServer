@@ -127,7 +127,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Chat.cpp" />
+    <ClCompile Include="App.cpp" />
+    <ClCompile Include="ChatManager.cpp" />
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="ChatPacket.cpp" />
     <ClCompile Include="Connector.cpp" />
@@ -136,9 +137,11 @@
     <ClCompile Include="PacketHandler.cpp" />
     <ClCompile Include="TestClient2.cpp" />
     <ClCompile Include="UI.cpp" />
+    <ClCompile Include="UIManager.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Chat.h" />
+    <ClInclude Include="App.h" />
+    <ClInclude Include="ChatManager.h" />
     <ClInclude Include="Client.h" />
     <ClInclude Include="ChatPacket.h" />
     <ClInclude Include="Connector.h" />
@@ -147,6 +150,7 @@
     <ClInclude Include="PacketHandler.h" />
     <ClInclude Include="Settings.h" />
     <ClInclude Include="UI.h" />
+    <ClInclude Include="UIManager.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -14,7 +14,7 @@ public:
 	Packet(u_short _size, u_short _type);
 	~Packet();
 
-	virtual char* MakePacket() = 0;
 	u_short GetPacketSize() const { return m_size; }
+	const char* GetPacketBuffer() const { return m_packetBuffer; }
 };
 

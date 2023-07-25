@@ -12,7 +12,5 @@ private:
 public:
 	ChatPacket(const char* _userName, int _userNameSize, const char* _message, int _messageSize);
 	~ChatPacket();
-
-	char* MakePacket() override;
 };
 

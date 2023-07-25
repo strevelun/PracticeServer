@@ -1,5 +1,7 @@
 #include "UI.h"
-#include "Chat.h"
+#include "ChatManager.h"
+
+#include <list>
 
 UI::UI()
 {
@@ -7,31 +9,25 @@ UI::UI()
 
 UI::~UI()
 {
-	std::list<const char*>::iterator iter = m_conversationList.begin();
-	std::list<const char*>::iterator iterEnd = m_conversationList.end();
 
-	for (; iter != iterEnd; iter++)
-		delete[] * iter;
 }
 
-void UI::PrintBoard(const Chat& _chat)
+void UI::PrintGetNickName()
 {
 	system("cls");
-	for (int i = 0; i < 10 - m_conversationList.size(); i++) puts("");
-	std::list<const char*>::iterator iter = m_conversationList.begin();
-	std::list<const char*>::iterator iterEnd = m_conversationList.end();
+	printf("닉네임 입력 : ");
+}
+
+void UI::PrintBoard()
+{
+	const std::list<const char*>& chatList = ChatManager::GetInst()->GetChatList();
+
+	system("cls");
+	for (int i = 0; i < 10 - chatList.size(); i++) puts("");
+	std::list<const char*>::const_iterator iter = chatList.begin();
+	std::list<const char*>::const_iterator iterEnd = chatList.end();
 	for (; iter != iterEnd; iter++)
 		printf("%s\n", *iter);
 	puts("=========================================================");
-	printf("입력 : %s", _chat.GetInputBuffer());
-}
-
-void UI::AddConversation(const char* _conv)
-{
-	if (m_conversationList.size() >= 10)
-	{
-		delete[] m_conversationList.front();
-		m_conversationList.pop_front();
-	}
-	m_conversationList.push_back(_conv);
+	printf("입력 : %s", ChatManager::GetInst()->GetInputBuffer());
 }

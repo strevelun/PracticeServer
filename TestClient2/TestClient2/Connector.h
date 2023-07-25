@@ -7,7 +7,6 @@ class Connector
 private:
 	SOCKADDR_IN  m_servAddr;
 	SOCKET   m_hClientSocket;
-	bool m_isRunning;
 
 public:
 	Connector();

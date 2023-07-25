@@ -6,7 +6,7 @@
 #include <process.h>
 
 Connector::Connector() :
-	m_hClientSocket(INVALID_SOCKET), m_isRunning(true)
+	m_hClientSocket(INVALID_SOCKET)
 {
 	
 }
@@ -51,5 +51,5 @@ int Connector::Receive(char* _buffer, int _bufferSize)
 
 int Connector::Send(Packet* _packet)
 {
-	return send(m_hClientSocket, _packet->MakePacket(), _packet->GetPacketSize(), 0);
+	return send(m_hClientSocket, _packet->GetPacketBuffer(), _packet->GetPacketSize(), 0);
 }

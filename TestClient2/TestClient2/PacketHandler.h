@@ -4,22 +4,16 @@
 
 class Connector;
 class UI;
-class Chat;
+class ChatManager;
 
 class PacketHandler
 {
-private:
-	Connector*		m_pConnector;
-	UI*				m_pUI;
-	Chat*			m_pChat;
 
 public:
-	PacketHandler(Connector* _pConnector, UI* _pUI, Chat* _pChat);
+	PacketHandler();
 	~PacketHandler();
 
-	ePacketType ProcessPacket(char* _packet, int _packetSize);
-
-private:
-	ePacketType ProcessChatPacket(char* _packet);
+public:
+	ePacketType HandleChatPacket(char* _packet);
 };
 
