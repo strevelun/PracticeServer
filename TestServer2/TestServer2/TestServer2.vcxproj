@@ -128,18 +128,22 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="App.cpp" />
-    <ClCompile Include="ChatServer.cpp" />
+    <ClCompile Include="TCPServer.cpp" />
     <ClCompile Include="Listener.cpp" />
     <ClCompile Include="Packet.cpp" />
     <ClCompile Include="PacketHandler.cpp" />
+    <ClCompile Include="PacketQueue.cpp" />
+    <ClCompile Include="Selector.cpp" />
     <ClCompile Include="TestServer2.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h" />
-    <ClInclude Include="ChatServer.h" />
+    <ClInclude Include="TCPServer.h" />
     <ClInclude Include="Listener.h" />
     <ClInclude Include="Packet.h" />
     <ClInclude Include="PacketHandler.h" />
+    <ClInclude Include="PacketQueue.h" />
+    <ClInclude Include="Selector.h" />
     <ClInclude Include="Settings.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

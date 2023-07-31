@@ -1,36 +1,29 @@
-#include "Client.h"
+#include "TCPClient.h"
 #include "Connector.h"
 #include "ChatPacket.h"
 #include "ExitPacket.h"
 #include "UIManager.h"
 #include "ChatManager.h"
+#include "App.h"
 
 #include <stdio.h>
 #include <conio.h>
 #include <thread>
-#include <Windows.h>
 
 using namespace std;
 
-Client::Client()
+TCPClient::TCPClient()
 {
 }
 
-Client::~Client()
+TCPClient::~TCPClient()
 {
-	delete[] m_userName;
 	CloseHandle(m_hThread);
 }
 
-bool Client::Init(const char* _serverIP, int _serverPort)
+bool TCPClient::Init(const char* _serverIP, int _serverPort)
 {
-	WSADATA  wsaData;
 
-	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
-	{
-		printf("Failed WSAStartup() \n");
-		return false;
-	}
 
 	if (!m_connector.Init())
 	{
@@ -55,18 +48,13 @@ bool Client::Init(const char* _serverIP, int _serverPort)
     return true;
 }
 
-void Client::Cleanup()
+void TCPClient::Cleanup()
 {
 	m_connector.Disconnect();
 	WSACleanup();
 }
 
-void Client::SetNickname(char* _nickname)
-{
-	memcpy(m_userName, _nickname, strlen(_nickname));
-}
-
-unsigned int Client::ReceivePacket()
+unsigned int TCPClient::ReceivePacket()
 {
 	int							recvSize, curTotalRecvSize = 0;
 	unsigned short				packetSize;
@@ -102,7 +90,7 @@ unsigned int Client::ReceivePacket()
 	return 0;
 }
 
-ePacketType Client::ProcessPacket(char* _packet)
+ePacketType TCPClient::ProcessPacket(char* _packet)
 {
 	char* tempPacket = _packet;
 	tempPacket += sizeof(u_short);
@@ -119,33 +107,28 @@ ePacketType Client::ProcessPacket(char* _packet)
 	return ePacketType::None;
 }
 
-unsigned int __stdcall Client::ThreadFunc(void* _pArgs)
+unsigned int __stdcall TCPClient::ThreadFunc(void* _pArgs)
 {
-	Client* pClient = static_cast<Client*>(_pArgs);
+	TCPClient* pClient = static_cast<TCPClient*>(_pArgs);
 	return pClient->ReceivePacket();
 }
 
-void Client::Update()
-{	
-	UI* pUI = UIManager::GetInst()->GetUI();
-	ChatManager* chatManager = ChatManager::GetInst();
-	
-	bool isTyped = false;
-	ePacketType type = chatManager->Input(isTyped);
-
-	if (isTyped == true)
-		pUI->PrintBoard();
-
-	if (type == ePacketType::Exit)
+void TCPClient::SendPacketByType(ePacketType _packetType)
+{		
+	if (_packetType == ePacketType::Exit)
 	{
 		ExitPacket* exitPacket = new ExitPacket();
 		m_connector.Send(exitPacket);
+		delete exitPacket;
 	}
-	else if (type == ePacketType::Chat)
+	else if (_packetType == ePacketType::Chat)
 	{
+		ChatManager* chatManager = ChatManager::GetInst();
+		const char* nickname = App::GetInst()->GetNickname();
 		const char* inputBuffer = chatManager->GetInputBuffer();
-		ChatPacket* chatPacket = new ChatPacket(m_userName, strlen(m_userName), inputBuffer, strlen(inputBuffer));
+		ChatPacket* chatPacket = new ChatPacket(nickname, strlen(nickname), inputBuffer, strlen(inputBuffer));
 		m_connector.Send(chatPacket);
 		chatManager->ClearInputBuffer();
+		delete chatPacket;
 	}
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 class ChatManager;
+#include <list>
 
 class UI
 {
@@ -9,6 +10,6 @@ public:
 	~UI();
 
 	void PrintGetNickName();
-	void PrintBoard();
+	void PrintBoard(const std::list<const char*>& chatList);
 };
 

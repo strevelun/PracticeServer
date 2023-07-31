@@ -1,11 +1,14 @@
 #include "App.h"
 #include "UIManager.h"
+#include "UI.h"
+#include "ChatManager.h"
 
 #include <cstdio>
+#include <Windows.h>
 
 App* App::m_inst = nullptr;
 
-App::App()
+App::App() 
 {
 }
 
@@ -15,8 +18,21 @@ App::~App()
 	UIManager::GetInst()->DestroyInst();
 }
 
+void App::SetNickname(char* _nickname)
+{
+	memcpy(m_userName, _nickname, strlen(_nickname));
+}
+
 bool App::Init()
 {
+	WSADATA  wsaData;
+
+	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+	{
+		printf("Failed WSAStartup() \n");
+		return false;
+	}
+
 	if (!UIManager::GetInst()->Init())
 		return false;
 
@@ -28,7 +44,9 @@ bool App::Init()
 
 void App::Run()
 {
-	UI* pUI = UIManager::GetInst()->GetUI();
+	UIManager* pUIManager = UIManager::GetInst();
+	UI* pUI = pUIManager->GetUI(); // 잘못된 구조 UIManager::Update()
+	ChatManager* chatManager = ChatManager::GetInst();
 
 	char userName[UserNameLen];
 	do {
@@ -36,12 +54,20 @@ void App::Run()
 		scanf_s("%s", userName, UserNameLen);
 	} while (strlen(userName) < 1);
 
-	m_client.SetNickname(userName);
+	SetNickname(userName);
 
-	pUI->PrintBoard();
+	pUI->PrintBoard(chatManager->GetChatList());
 
 	while (m_isRunning)
 	{
-		m_client.Update();
+		ePacketType type = chatManager->Input();
+
+		m_client.SendPacketByType(type);
+
+		if (pUIManager->GetUpdateNeeded())
+		{
+			pUI->PrintBoard(chatManager->GetChatList());
+			pUIManager->SetUpdateNeeded(false);
+		}
 	}
 }

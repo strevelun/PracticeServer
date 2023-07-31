@@ -1,13 +1,14 @@
 #pragma once
 
-#include "Client.h"
+#include "TCPClient.h"
 
 class App
 {
 private:
 	static App* m_inst;
 
-	Client m_client;
+	TCPClient m_client;
+	char m_userName[UserNameLen] = {0};
 
 	bool m_isRunning = true;
 
@@ -31,6 +32,10 @@ public:
 
 	bool Init();
 	void Run();
-	Client& FindMyClient() { return m_client; }
+	TCPClient& FindMyClient() { return m_client; }
+	const char* GetNickname() const { return m_userName; }
+
+private:
+	void SetNickname(char* _nickname);
 };
 

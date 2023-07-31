@@ -1,4 +1,7 @@
 #pragma once
+
+class UI;
+
 class UIManager
 {
 private:
@@ -7,7 +10,9 @@ private:
 	UIManager();
 	~UIManager();
 
-	class UI* m_pUI;
+	UI* m_pUI;
+
+	bool m_updateNeeded = false;
 
 public:
 	static UIManager* GetInst()
@@ -24,5 +29,8 @@ public:
 
 	bool Init();
 	UI* GetUI() { return m_pUI; }
+	void SetUpdateNeeded(bool _updateNeeded) { m_updateNeeded = _updateNeeded; }
+
+	bool GetUpdateNeeded() const { return m_updateNeeded; }
 };
 

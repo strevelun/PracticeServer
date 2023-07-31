@@ -24,7 +24,7 @@
     <ClCompile Include="Connector.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Client.cpp">
+    <ClCompile Include="TCPClient.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="Packet.cpp">
@@ -56,7 +56,7 @@
     <ClInclude Include="Connector.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Client.h">
+    <ClInclude Include="TCPClient.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Packet.h">

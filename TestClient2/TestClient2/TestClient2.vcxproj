@@ -129,7 +129,7 @@
   <ItemGroup>
     <ClCompile Include="App.cpp" />
     <ClCompile Include="ChatManager.cpp" />
-    <ClCompile Include="Client.cpp" />
+    <ClCompile Include="TCPClient.cpp" />
     <ClCompile Include="ChatPacket.cpp" />
     <ClCompile Include="Connector.cpp" />
     <ClCompile Include="ExitPacket.cpp" />
@@ -142,7 +142,7 @@
   <ItemGroup>
     <ClInclude Include="App.h" />
     <ClInclude Include="ChatManager.h" />
-    <ClInclude Include="Client.h" />
+    <ClInclude Include="TCPClient.h" />
     <ClInclude Include="ChatPacket.h" />
     <ClInclude Include="Connector.h" />
     <ClInclude Include="ExitPacket.h" />

@@ -14,6 +14,8 @@ private:
 
 	std::list<const char*> m_chatList;
 
+	bool				m_isTyped;
+
 	ChatManager();
 	~ChatManager();
 
@@ -31,11 +33,11 @@ public:
 	}
 
 	const char* GetInputBuffer() const { return m_inputBuffer; }
+	
+	ePacketType Input(); // InputManager
 
-	ePacketType Input(bool& _isTyped);
-
-	void ClearInputBuffer() { m_inputBuffer[0] = 0; }
-	void AddConversation(const char* _who, const char* _saidThat);
+	void ClearInputBuffer() { m_inputBuffer[0] = 0;  }
+	void AddChat(const char* _who, const char* _saidThat);
 
 	const std::list<const char*>& GetChatList() const { return m_chatList; };
 };

@@ -4,6 +4,8 @@
 
 int main()
 {
+	App app;
+
 	if (App::GetInst()->Init())
 		App::GetInst()->Run();
 

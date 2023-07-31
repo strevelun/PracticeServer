@@ -18,10 +18,8 @@ void UI::PrintGetNickName()
 	printf("닉네임 입력 : ");
 }
 
-void UI::PrintBoard()
+void UI::PrintBoard(const std::list<const char*>& chatList)
 {
-	const std::list<const char*>& chatList = ChatManager::GetInst()->GetChatList();
-
 	system("cls");
 	for (int i = 0; i < 10 - chatList.size(); i++) puts("");
 	std::list<const char*>::const_iterator iter = chatList.begin();

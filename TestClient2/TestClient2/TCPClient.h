@@ -2,10 +2,9 @@
 
 
 #include "Connector.h"
-#include "UI.h"
 #include "PacketHandler.h"
 
-class Client
+class TCPClient
 {
 private:
 	HANDLE m_hThread;
@@ -13,17 +12,13 @@ private:
 	Connector		m_connector;
 	PacketHandler m_packetHandler;
 
-	char m_userName[UserNameLen];
-
 public:
-	Client();
-	~Client();
+	TCPClient();
+	~TCPClient();
 
 	bool Init(const char* _serverIP, int _serverPort);
-	void Update();
+	void SendPacketByType(ePacketType _packetType);
 	void Cleanup();
-
-	void SetNickname(char* _nickname);
 
 	unsigned int ReceivePacket();
 

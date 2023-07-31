@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <WS2tcpip.h>
 
+Listener* Listener::m_inst = nullptr;
+
 Listener::Listener()
 {
 }
@@ -11,7 +13,7 @@ Listener::~Listener()
 {
 }
 
-bool Listener::Init()
+bool Listener::Init(const char* _serverIP, int _serverPort)
 {
 	m_hSocketServer = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (m_hSocketServer == INVALID_SOCKET)
@@ -20,25 +22,19 @@ bool Listener::Init()
 		return false;
 	}
 
+	Connect(_serverIP, _serverPort);
+
     return true;
 }
 
-SOCKET Listener::Accept(SOCKADDR_IN* _addrClient, int* _addrSize)
+SOCKET Listener::AcceptClient()
 {
-	return accept(m_hSocketServer, (SOCKADDR*)_addrClient, _addrSize);
+	SOCKADDR_IN			addrClient;
+	int addrSize = sizeof(addrClient);
+	return accept(m_hSocketServer, (SOCKADDR*)&addrClient, &addrSize);
 }
 
-int Listener::Receive(SOCKET _socket, char* _buffer, int _bufferSize)
-{
-    return recv(_socket, _buffer, _bufferSize, 0);
-}
-
-int Listener::Send(SOCKET _socket, Packet* _packet)
-{
-    return 0;
-}
-
-bool Listener::Connect(const char* _serverIP, int _serverPort)
+bool Listener::Connect(const char* _serverIP, int _serverPort, int _backlog)
 {
 	memset(&m_servAddr, 0, sizeof(m_servAddr));
 	m_servAddr.sin_family = AF_INET; // IPv4
@@ -50,7 +46,7 @@ bool Listener::Connect(const char* _serverIP, int _serverPort)
 		printf("Binding Error \n");
 		return false;
 	}
-	if (listen(m_hSocketServer, 3) == SOCKET_ERROR)
+	if (listen(m_hSocketServer, _backlog) == SOCKET_ERROR)
 	{
 		printf("listen Error \n");
 		return false;
@@ -62,4 +58,8 @@ bool Listener::Connect(const char* _serverIP, int _serverPort)
 void Listener::Disconnect()
 {
 	if (m_hSocketServer != INVALID_SOCKET) closesocket(m_hSocketServer);
+}
+
+void Listener::Listen()
+{
 }

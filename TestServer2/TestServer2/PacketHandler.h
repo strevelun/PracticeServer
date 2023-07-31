@@ -10,6 +10,7 @@ public:
 	PacketHandler();
 	~PacketHandler();
 
-	ePacketType ReadPacket(char* _packet);
+	ePacketType HandleChatPacket(char* _packet, int _packetSize);
+	ePacketType HandleExitPacket(char* _packet);
 };
 

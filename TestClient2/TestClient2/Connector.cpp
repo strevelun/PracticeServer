@@ -1,4 +1,4 @@
-#include "Client.h"
+#include "TCPClient.h"
 #include "Connector.h"
 #include "Packet.h"
 
@@ -51,5 +51,6 @@ int Connector::Receive(char* _buffer, int _bufferSize)
 
 int Connector::Send(Packet* _packet)
 {
-	return send(m_hClientSocket, _packet->GetPacketBuffer(), _packet->GetPacketSize(), 0);
+	const char* buffer = _packet->GetPacketBuffer();
+	return send(m_hClientSocket, buffer, _packet->GetPacketSize(), 0);
 }

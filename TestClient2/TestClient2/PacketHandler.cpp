@@ -34,8 +34,8 @@ ePacketType PacketHandler::HandleChatPacket(char* _packet)
 	memcpy(body, _packet, bodySize);
 	body[bodySize] = 0;
 
-	ChatManager::GetInst()->AddConversation(userName, body);
-	pUI->PrintBoard();
+	ChatManager::GetInst()->AddChat(userName, body);
+	UIManager::GetInst()->SetUpdateNeeded(true);
 
 	return ePacketType::Chat;
 }
